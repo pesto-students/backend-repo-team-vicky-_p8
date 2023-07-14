@@ -2,6 +2,7 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { genSalt, hash, compare } from "bcrypt";
 import jwt from "jsonwebtoken";
 import { renameSync } from "fs";
+import store from "store2";
 
 const generatePassword = async (password) => {
   const salt = await genSalt();
@@ -27,6 +28,11 @@ export const signup = async (req, res, next) => {
           password: await generatePassword(password),
         },
       });
+
+      const storeToken = createToken(email, user.id);
+      console.log("token generated", storeToken);
+
+      store("jwt", storeToken);
       return res.status(201).json({
         user: { id: user?.id, email: user?.email },
         jwt: createToken(email, user.id),
@@ -66,6 +72,11 @@ export const login = async (req, res, next) => {
         return res.status(400).send("Invalid Password");
       }
 
+      const storeToken = createToken(email, user.id);
+      console.log("token generated", storeToken);
+
+      store("jwt", storeToken);
+
       return res.status(200).json({
         user: { id: user?.id, email: user?.email },
         jwt: createToken(email, user.id),
@@ -87,6 +98,9 @@ export const getUserInfo = async (req, res, next) => {
           id: req.userId,
         },
       });
+
+      console.log("req--------", req);
+      console.log("res--------", res);
       return res.status(200).json({
         user: {
           id: user?.id,
